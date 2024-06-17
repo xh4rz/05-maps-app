@@ -1,16 +1,19 @@
-import { useReducer } from 'react';
+import { useContext, useEffect, useReducer } from 'react';
 import { Map, Marker, Popup } from 'mapbox-gl';
 import { MapContext } from './MapContext';
 import { mapReducer } from './mapReducer';
+import { PlacesContext } from '../';
 
 export interface MapState {
 	isMapReady: boolean;
 	map?: Map;
+	markers: Marker[];
 }
 
 const INITIAL_STATE: MapState = {
 	isMapReady: false,
-	map: undefined
+	map: undefined,
+	markers: []
 };
 
 interface Props {
@@ -19,6 +22,32 @@ interface Props {
 
 export const MapProvider = ({ children }: Props) => {
 	const [state, dispatch] = useReducer(mapReducer, INITIAL_STATE);
+
+	const { places } = useContext(PlacesContext);
+
+	useEffect(() => {
+		state.markers.forEach((marker) => marker.remove());
+
+		const newMarkers: Marker[] = [];
+
+		for (const place of places) {
+			const [lng, lat] = place.geometry.coordinates;
+
+			const popup = new Popup().setHTML(
+				`<h6>${place.properties.name}</h6> <p>${place.properties.full_address}</p>`
+			);
+
+			const newMarker = new Marker()
+				.setPopup(popup)
+				.setLngLat([lng, lat])
+				.addTo(state.map!);
+
+			newMarkers.push(newMarker);
+		}
+
+		// todo: limpiar polyline
+		dispatch({ type: 'setMarkers', payload: newMarkers });
+	}, [places]);
 
 	const setMap = (map: Map) => {
 		const myLocationPopup = new Popup().setHTML(
