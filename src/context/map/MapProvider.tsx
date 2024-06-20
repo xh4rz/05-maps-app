@@ -50,6 +50,13 @@ export const MapProvider = ({ children }: Props) => {
 		dispatch({ type: 'setMarkers', payload: newMarkers });
 	}, [places]);
 
+	useEffect(() => {
+		if (state.map?.getLayer('RouteString') && !places.length) {
+			state.map.removeLayer('RouteString');
+			state.map.removeSource('RouteString');
+		}
+	}, [places]);
+
 	const setMap = (map: Map) => {
 		const myLocationPopup = new Popup().setHTML(
 			`<h4>Aquí estoy </h4> <p>En algún lugar del mundo</p>`
